@@ -710,12 +710,8 @@ static NSString *const ExtKey_query             = @"query";
 #pragma mark Subclass Hooks
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
- * This method is invoked whenver a item is added to our view.
-**/
-- (void)didInsertRowid:(int64_t)rowid collectionKey:(YapCollectionKey *)collectionKey
+- (void)insertSnippet:(id)snippet atRowid:(uint64_t)rowid collectionKey:(YapCollectionKey *)collectionKey
 {
-	id snippet = [snippets objectForKey:@(rowid)];
 	if (snippet == nil) return;
 	
 	if ([self isPersistentView])
@@ -778,6 +774,15 @@ static NSString *const ExtKey_query             = @"query";
 			[snippetTableTransaction setObject:snippet forKey:@(rowid)];
 		}
 	}
+}
+
+/**
+ * This method is invoked whenver a item is added to our view.
+**/
+- (void)didInsertRowid:(int64_t)rowid collectionKey:(YapCollectionKey *)collectionKey
+{
+	id snippet = [snippets objectForKey:@(rowid)];
+	[self insertSnippet:snippet atRowid:rowid collectionKey:collectionKey];
 }
 
 /**
@@ -2351,21 +2356,8 @@ static NSString *const ExtKey_query             = @"query";
 	searchQueue = nil;
 }
 
-- (NSString *)snippetForKey:(NSString *)key inCollection:(NSString *)collection
+- (NSString *)snippetForRowid:(uint64_t)rowid
 {
-	__unsafe_unretained YapDatabaseSearchResultsViewOptions *searchResultsOptions =
-	(YapDatabaseSearchResultsViewOptions *)viewConnection->view->options;
-	
-	if (searchResultsOptions.snippetOptions == nil) {
-		// Ignore - snippets not being used
-		return nil;
-	}
-	
-	int64_t rowid = 0;
-	if (![databaseTransaction getRowid:&rowid forKey:key inCollection:collection]) {
-		return nil;
-	}
-	
 	NSString *snippet = nil;
 	
 	if ([self isPersistentView])
@@ -2406,6 +2398,24 @@ static NSString *const ExtKey_query             = @"query";
 	}
 	
 	return snippet;
+}
+
+- (NSString *)snippetForKey:(NSString *)key inCollection:(NSString *)collection
+{
+	__unsafe_unretained YapDatabaseSearchResultsViewOptions *searchResultsOptions =
+	(YapDatabaseSearchResultsViewOptions *)viewConnection->view->options;
+	
+	if (searchResultsOptions.snippetOptions == nil) {
+		// Ignore - snippets not being used
+		return nil;
+	}
+	
+	int64_t rowid = 0;
+	if (![databaseTransaction getRowid:&rowid forKey:key inCollection:collection]) {
+		return nil;
+	}
+	
+	return [self snippetForRowid:rowid];
 }
 
 @end
