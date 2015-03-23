@@ -1961,11 +1961,7 @@ static NSString *const ExtKey_query             = @"query";
 	NSString *oldSnippet = [self snippetForRowid:rowid];
 	if (oldSnippet == nil) return NO;
 
-	if (![snippet isEqualToString:oldSnippet]) {
-		return YES;
-	}
-
-	return NO;
+	return YES;
 }
 
 /**
