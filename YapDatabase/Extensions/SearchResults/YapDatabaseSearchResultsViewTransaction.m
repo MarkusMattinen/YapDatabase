@@ -1953,21 +1953,6 @@ static NSString *const ExtKey_query             = @"query";
 	return [searchResultsViewConnection query];
 }
 
-- (BOOL)didSnippetChangeAtRow:(int64_t)rowid
-{
-	NSString *snippet = [snippets objectForKey:@(rowid)];
-	if (snippet == nil) return NO;
-
-	NSString *oldSnippet = [self snippetForRowid:rowid];
-	if (oldSnippet == nil) return NO;
-
-	if (![snippet isEqualToString:oldSnippet]) {
-		return YES;
-	}
-
-	return NO;
-}
-
 /**
  * This method updates the view by using the updated ftsRowids set.
  * Only use this method if parentViewName is non-nil.
@@ -2042,25 +2027,11 @@ static NSString *const ExtKey_query             = @"query";
 					// The row was previously in the view (in old search results),
 					// and is still in the view (in new search results).
 
-					if ([self didSnippetChangeAtRow:rowid]) {
-						// Snippet changed.
-						NSString *snippet = [snippets objectForKey:@(rowid)];
-						YapCollectionKey *collectionKey = [databaseTransaction collectionKeyForRowid:rowid];
+					NSString *snippet = [snippets objectForKey:@(rowid)];
+					YapCollectionKey *collectionKey = [databaseTransaction collectionKeyForRowid:rowid];
 
-						// Update snippet in snippet table.
-						[self insertSnippet:snippet atRowid:rowid collectionKey:collectionKey];
-
-						YapDatabaseViewChangesBitMask flags = YapDatabaseViewChangedObject;
-						NSString *pageKey = [self pageKeyForRowid:rowid];
-						NSUInteger existingIndex = [self indexForRowid:rowid inGroup:group withPageKey:pageKey];
-
-						// Mark object as changed.
-						[viewConnection->changes addObject:
-						  [YapDatabaseViewRowChange updateCollectionKey:collectionKey
-						                                        inGroup:group
-						                                        atIndex:existingIndex
-						                                    withChanges:flags]];
-					}
+					// Update snippet in snippet table.
+					[self insertSnippet:snippet atRowid:rowid collectionKey:collectionKey];
 					
 					index++;
 					existing = [self getRowid:&existingRowid atIndex:index inGroup:group];
